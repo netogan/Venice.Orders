@@ -24,8 +24,15 @@ public class AuthController : ControllerBase
 
         var issuer   = _config["Auth:Issuer"]    ?? "Venice";
         var audience = _config["Auth:Audience"]  ?? "VeniceClients";
-        var key      = _config["Auth:SigningKey"] ?? "dev-signing-key-please-change";
-        var creds    = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256);
+        var key      = _config["Auth:SigningKey"] ?? "dev-signing-key-please-change-this-must-be-at-least-32-characters-long";
+        
+        // Validar tamanho mínimo da chave (256 bits = 32 bytes)
+        if (Encoding.UTF8.GetByteCount(key) < 32)
+        {
+            throw new InvalidOperationException("JWT SigningKey deve ter pelo menos 32 caracteres (256 bits) para HS256");
+        }
+        
+        var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {

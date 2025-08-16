@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Venice.Orders.Domain\Venice.Orders.Domain.csproj" />
-    <ProjectReference Include="..\Venice.Orders.Infrastructure\Venice.Orders.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

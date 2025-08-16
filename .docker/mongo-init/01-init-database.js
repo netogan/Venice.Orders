@@ -14,12 +14,16 @@ db.createCollection('PedidoItens', {
             required: ["PedidoId", "ProdutoId", "Quantidade", "PrecoUnitario"],
             properties: {
                 PedidoId: {
-                    bsonType: "int",
+                    bsonType: "string",
                     description: "ID do pedido é obrigatório"
                 },
                 ProdutoId: {
-                    bsonType: "int", 
+                    bsonType: "string", 
                     description: "ID do produto é obrigatório"
+                },
+                NomeProduto: {
+                    bsonType: "string",
+                    description: "Nome do produto"
                 },
                 Quantidade: {
                     bsonType: "int",
@@ -50,19 +54,6 @@ db.PedidoItens.createIndex({ "PedidoId": 1, "ProdutoId": 1 }, { unique: true });
 db.PedidoItens.createIndex({ "CreatedAt": -1 });
 
 print('Collection PedidoItens criada com índices otimizados');
-
-// Inserir um documento de teste (opcional)
-db.PedidoItens.insertOne({
-    PedidoId: 0,
-    ProdutoId: 0,
-    Quantidade: 1,
-    PrecoUnitario: NumberDecimal("0.01"),
-    CreatedAt: new Date(),
-    UpdatedAt: new Date(),
-    _isTestDocument: true
-});
-
-print('Documento de teste inserido');
 
 // Verificar se tudo foi criado corretamente
 print('Collections na database venice_orders_db:');

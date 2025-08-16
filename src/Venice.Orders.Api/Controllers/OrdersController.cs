@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using MongoDB.Driver;
 using Venice.Orders.Application.Contracts;
+using Venice.Orders.Application.Services;
 using Venice.Orders.Domain.Entities;
 using Venice.Orders.Domain.Enums;
+using Venice.Orders.Domain.Events;
 using Venice.Orders.Infrastructure.Mongo;
 using Venice.Orders.Infrastructure.Persistence;
 
@@ -20,13 +22,22 @@ public class OrdersController : ControllerBase
     private readonly OrdersDbContext _sql;
     private readonly IMongoContext _mongo;
     private readonly IDistributedCache _cache;
+    private readonly IConfiguration _configuration;
+    private readonly IPedidoEventService _pedidoEventService;
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
-    public OrdersController(OrdersDbContext sql, IMongoContext mongo, IDistributedCache cache)
+    public OrdersController(
+        OrdersDbContext sql, 
+        IMongoContext mongo, 
+        IDistributedCache cache,
+        IConfiguration configuration,
+        IPedidoEventService pedidoEventService)
     {
         _sql = sql;
         _mongo = mongo;
         _cache = cache;
+        _configuration = configuration;
+        _pedidoEventService = pedidoEventService;
     }
 
     /// <summary>Cria um pedido no SQL e seus itens no Mongo.</summary>
@@ -82,7 +93,36 @@ public class OrdersController : ControllerBase
         };
         await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(response, _json), options, ct);
 
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = pedido.Id }, response);
+        // Publicar evento PedidoCriado no Kafka
+        try
+        {
+            var evento = new PedidoCriadoEvent
+            {
+                PedidoId = pedido.Id,
+                ClienteId = pedido.ClienteId,
+                Data = pedido.Data,
+                Status = pedido.Status.ToString(),
+                Total = pedido.Total,
+                Itens = docs.Select(d => new PedidoItemEvent
+                {
+                    ProdutoId = d.ProdutoId,
+                    NomeProduto = d.NomeProduto,
+                    Quantidade = d.Quantidade,
+                    PrecoUnitario = d.PrecoUnitario
+                }).ToList()
+            };
+
+            var topico = _configuration["Kafka:TopicPedidos"] ?? "pedidos";
+            await _pedidoEventService.PublicarPedidoCriadoAsync(evento, ct);
+        }
+        catch (Exception ex)
+        {
+            // Log do erro, mas não falha a operação
+            // Em produção, considere usar um padrão de outbox ou retry
+            Console.WriteLine($"Erro ao publicar evento: {ex.Message}");
+        }
+
+        return Created($"/api/orders/{pedido.Id}", response);
     }
 
     /// <summary>Retorna o pedido e seus itens agregados (com cache de 120s).</summary>

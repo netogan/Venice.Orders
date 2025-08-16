@@ -9,18 +9,19 @@ public class PedidoItemDocument
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
 
-    [BsonElement("pedidoId")]
+    [BsonElement("PedidoId")]
+    [BsonRepresentation(BsonType.String)]
     public Guid PedidoId { get; set; }
 
-    [BsonElement("produtoId")]
+    [BsonElement("ProdutoId")]
     public string ProdutoId { get; set; } = default!;
 
-    [BsonElement("nomeProduto")]
+    [BsonElement("NomeProduto")]
     public string NomeProduto { get; set; } = default!;
 
-    [BsonElement("quantidade")]
+    [BsonElement("Quantidade")]
     public int Quantidade { get; set; }
 
-    [BsonElement("precoUnitario")]
+    [BsonElement("PrecoUnitario")]
     public decimal PrecoUnitario { get; set; }
 }

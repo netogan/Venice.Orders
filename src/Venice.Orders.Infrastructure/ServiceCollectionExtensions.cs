@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Venice.Orders.Infrastructure.Mongo;
 using Venice.Orders.Infrastructure.Persistence;
 
@@ -52,13 +53,57 @@ public static class ServiceCollectionExtensions
     {
         using var scope = sp.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
-        await db.Database.MigrateAsync();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<OrdersDbContext>>();
+        
+        try
+        {
+            logger.LogInformation("Iniciando aplicação de migrações EF...");
+            
+            // Log da connection string (mascarando senha)
+            var connectionString = db.Database.GetConnectionString();
+            var maskedCs = connectionString?.Replace("SQLserver123$", "***");
+            logger.LogInformation("Connection String: {ConnectionString}", maskedCs);
+            
+            // Verificar se pode conectar ao banco
+            logger.LogInformation("Testando conectividade com o banco...");
+            var canConnect = await db.Database.CanConnectAsync();
+            if (!canConnect)
+            {
+                logger.LogWarning("Não foi possível conectar ao banco de dados. Pulando migrações.");
+                return;
+            }
+            
+            logger.LogInformation("Conexão com banco estabelecida. Aplicando migrações...");
+            
+            // Aplicar migrações com timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await db.Database.MigrateAsync(cts.Token);
+            
+            logger.LogInformation("Migrações EF aplicadas com sucesso!");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao aplicar migrações EF: {Message}", ex.Message);
+            throw;
+        }
     }
 
     public static async Task EnsureMongoIndexesAsync(this IServiceProvider sp, CancellationToken ct = default)
     {
         using var scope = sp.CreateScope();
         var mongo = scope.ServiceProvider.GetRequiredService<IMongoContext>();
-        await MongoIndexInitializer.EnsureIndexesAsync(mongo, ct);
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<IMongoContext>>();
+        
+        try
+        {
+            logger.LogInformation("Iniciando criação de índices MongoDB...");
+            await MongoIndexInitializer.EnsureIndexesAsync(mongo, ct);
+            logger.LogInformation("Índices MongoDB criados com sucesso!");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao criar índices MongoDB: {Message}", ex.Message);
+            throw;
+        }
     }
 }

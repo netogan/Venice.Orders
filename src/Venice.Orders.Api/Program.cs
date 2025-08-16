@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
 using MongoDB.Driver;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Venice.Orders.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,9 @@ var redisCs = builder.Configuration.GetConnectionString("Redis")
              ?? Environment.GetEnvironmentVariable("ConnectionStrings__Redis")
              ?? "localhost:6379";
 builder.Services.AddStackExchangeRedisCache(opt => opt.Configuration = redisCs);
+
+// ===== Kafka Messaging =====
+builder.Services.AddKafkaMessaging();
 
 // ===== Controllers + Swagger =====
 builder.Services.AddControllers();
@@ -112,8 +116,29 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 // ===== Migrações EF + índices Mongo no startup =====
-await app.Services.ApplyEfMigrationsAsync();
-await app.Services.EnsureMongoIndexesAsync();
+try
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Iniciando configuração do banco de dados...");
+    
+    await app.Services.ApplyEfMigrationsAsync();
+    await app.Services.EnsureMongoIndexesAsync();
+    
+    logger.LogInformation("Configuração do banco de dados concluída!");
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Erro crítico na inicialização do banco de dados: {Message}", ex.Message);
+    
+    // Em desenvolvimento, podemos continuar sem banco para debug
+    if (!app.Environment.IsDevelopment())
+    {
+        throw;
+    }
+    
+    logger.LogWarning("Continuando sem banco de dados (modo desenvolvimento)");
+}
 
 if (app.Environment.IsDevelopment())
 {

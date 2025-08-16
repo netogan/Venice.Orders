@@ -10,7 +10,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<OrdersDbCo
     {
         // Tenta pegar de env var ou usa fallback
         var conn = Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer")
-                   ?? "Server=localhost,1433;User Id=sa;Password=SQLServer123$;TrustServerCertificate=True;";
+                   ?? "Server=localhost,1433;Database=VeniceOrdersDB;User Id=sa;Password=SQLServer123$;TrustServerCertificate=True;";
 
         var optionsBuilder = new DbContextOptionsBuilder<OrdersDbContext>();
         optionsBuilder.UseSqlServer(conn);

@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Venice.Orders.Application\Venice.Orders.Application.csproj" />
+    <ProjectReference Include="..\Venice.Orders.Infrastructure\Venice.Orders.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

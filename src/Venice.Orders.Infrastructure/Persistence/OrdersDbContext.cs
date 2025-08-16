@@ -11,6 +11,9 @@ public class OrdersDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Define o schema padrão como 'dbo'
+        modelBuilder.HasDefaultSchema("dbo");
+        
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdersDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
