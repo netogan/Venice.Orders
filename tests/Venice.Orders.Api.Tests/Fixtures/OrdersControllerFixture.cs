@@ -112,8 +112,22 @@ public class OrdersControllerFixture : IDisposable
 
     public void SetupMongoFindResult(List<PedidoItemDocument> documents)
     {
-        MockFindFluent.Setup(x => x.ToListAsync(It.IsAny<CancellationToken>()))
-                     .ReturnsAsync(documents);
+        // Setup a fake cursor that returns our test data
+        var mockCursor = new Mock<IAsyncCursor<PedidoItemDocument>>();
+        mockCursor.Setup(_ => _.Current).Returns(documents);
+        mockCursor.SetupSequence(_ => _.MoveNext(It.IsAny<CancellationToken>()))
+                  .Returns(true)
+                  .Returns(false);
+        mockCursor.SetupSequence(_ => _.MoveNextAsync(It.IsAny<CancellationToken>()))
+                  .ReturnsAsync(true)
+                  .ReturnsAsync(false);
+
+        // Setup the collection to return this cursor when Find is called
+        MockMongoCollection.Setup(x => x.FindAsync(
+            It.IsAny<MongoDB.Driver.FilterDefinition<PedidoItemDocument>>(),
+            It.IsAny<MongoDB.Driver.FindOptions<PedidoItemDocument>>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockCursor.Object);
     }
 
     public void SetupMongoFind()
