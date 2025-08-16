@@ -28,10 +28,11 @@ public class KafkaProducer : IKafkaProducer, IDisposable
             MessageSendMaxRetries = 3,
             EnableIdempotence = true,
             CompressionType = CompressionType.Snappy,
+            MessageTimeoutMs = 5000,
+            RequestTimeoutMs = 5000,
+            SocketTimeoutMs = 5000,
             BatchSize = 16384,
-            LingerMs = 10,
-            RequestTimeoutMs = 30000,
-            MessageTimeoutMs = 60000
+            LingerMs = 10
         };
 
         _producer = new ProducerBuilder<string, string>(config)
