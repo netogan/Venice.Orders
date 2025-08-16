@@ -10,10 +10,8 @@ public class Pedido
     public PedidoStatus Status { get; private set; }
     public decimal Total { get; private set; }
 
-    // Construtor privado para Entity Framework
     private Pedido() { }
 
-    // Construtor de domínio
     public Pedido(int clienteId)
     {
         ClienteId = clienteId;

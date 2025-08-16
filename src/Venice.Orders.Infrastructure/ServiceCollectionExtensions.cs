@@ -59,12 +59,10 @@ public static class ServiceCollectionExtensions
         {
             logger.LogInformation("Iniciando aplicação de migrações EF...");
             
-            // Log da connection string (mascarando senha)
             var connectionString = db.Database.GetConnectionString();
             var maskedCs = connectionString?.Replace("SQLserver123$", "***");
             logger.LogInformation("Connection String: {ConnectionString}", maskedCs);
             
-            // Verificar se pode conectar ao banco
             logger.LogInformation("Testando conectividade com o banco...");
             var canConnect = await db.Database.CanConnectAsync();
             if (!canConnect)
@@ -75,7 +73,6 @@ public static class ServiceCollectionExtensions
             
             logger.LogInformation("Conexão com banco estabelecida. Aplicando migrações...");
             
-            // Aplicar migrações com timeout
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
             await db.Database.MigrateAsync(cts.Token);
             

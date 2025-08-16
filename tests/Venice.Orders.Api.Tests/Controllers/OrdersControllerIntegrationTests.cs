@@ -1,15 +1,9 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Venice.Orders.Api.Tests.Fixtures;
 using Venice.Orders.Application.Contracts;
-using Venice.Orders.Domain.Entities;
 using Venice.Orders.Domain.Enums;
-using Venice.Orders.Infrastructure.Mongo;
-using Xunit;
 
 namespace Venice.Orders.Api.Tests.Controllers;
 
@@ -64,7 +58,6 @@ public class OrdersControllerIntegrationTests : IClassFixture<OrdersControllerFi
         response.Itens[0].Quantidade.Should().Be(2);
         response.Itens[0].PrecoUnitario.Should().Be(10.50m);
 
-        // Verify the pedido was saved in the database
         var savedPedido = await _fixture.DbContext.Pedidos.FirstOrDefaultAsync(p => p.ClienteId == 123);
         savedPedido.Should().NotBeNull();
         savedPedido!.Status.Should().Be(PedidoStatus.Criado);
@@ -92,7 +85,6 @@ public class OrdersControllerIntegrationTests : IClassFixture<OrdersControllerFi
         var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().Be("Informe ao menos 1 item.");
 
-        // Verify no pedido was saved
         var pedidoCount = await _fixture.DbContext.Pedidos.CountAsync();
         pedidoCount.Should().Be(0);
     }
@@ -118,7 +110,6 @@ public class OrdersControllerIntegrationTests : IClassFixture<OrdersControllerFi
         var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().Be("Informe ao menos 1 item.");
 
-        // Verify no pedido was saved
         var pedidoCount = await _fixture.DbContext.Pedidos.CountAsync();
         pedidoCount.Should().Be(0);
     }
@@ -164,10 +155,9 @@ public class OrdersControllerIntegrationTests : IClassFixture<OrdersControllerFi
         
         var response = createdResult.Value.Should().BeOfType<PedidoResponse>().Subject;
         response.ClienteId.Should().Be(789);
-        response.Total.Should().Be(96.00m); // (3 * 15.00) + (2 * 25.50) = 45 + 51 = 96
+        response.Total.Should().Be(96.00m);
         response.Itens.Should().HaveCount(2);
 
-        // Verify the pedido was saved with correct total
         var savedPedido = await _fixture.DbContext.Pedidos.FirstOrDefaultAsync(p => p.ClienteId == 789);
         savedPedido.Should().NotBeNull();
         savedPedido!.Total.Should().Be(96.00m);

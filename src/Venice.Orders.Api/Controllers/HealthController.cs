@@ -53,7 +53,7 @@ public class HealthController : ControllerBase
         var statusCode = report.Status switch
         {
             HealthStatus.Healthy => 200,
-            HealthStatus.Degraded => 200, // pode optar por 503 se preferir
+            HealthStatus.Degraded => 200,
             _ => 503
         };
 

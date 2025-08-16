@@ -41,7 +41,6 @@ public class OrdersController : ControllerBase
         _pedidoEventService = pedidoEventService;
     }
 
-    /// <summary>Cria um pedido no SQL e seus itens no Mongo.</summary>
     [HttpPost]
     public async Task<ActionResult<PedidoResponse>> CreateAsync([FromBody] CreatePedidoRequest request, CancellationToken ct)
     {
@@ -126,7 +125,6 @@ public class OrdersController : ControllerBase
         return Created($"/api/orders/{pedido.Id}", response);
     }
 
-    /// <summary>Retorna o pedido e seus itens agregados (com cache de 120s).</summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<PedidoResponse>> GetByIdAsync([FromRoute] Guid id, CancellationToken ct)
     {

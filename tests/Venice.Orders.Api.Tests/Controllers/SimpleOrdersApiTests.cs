@@ -1,11 +1,7 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Venice.Orders.Api.Tests.Fixtures;
 using Venice.Orders.Application.Contracts;
-using Xunit;
 
 namespace Venice.Orders.Api.Tests.Controllers;
 

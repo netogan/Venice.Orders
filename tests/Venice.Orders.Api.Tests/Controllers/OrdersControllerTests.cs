@@ -34,7 +34,7 @@ public class OrdersControllerTests : IClassFixture<OrdersControllerFixture>
         _fixture.ResetMocks();
         _fixture.SetupCacheSet();
         _fixture.SetupEventService();
-        _fixture.SetupMongoFind(); // Setup MongoDB mocking
+        _fixture.SetupMongoFind();
         
         var request = new CreatePedidoRequest
         {
@@ -61,14 +61,13 @@ public class OrdersControllerTests : IClassFixture<OrdersControllerFixture>
         var response = createdResult.Value.Should().BeOfType<PedidoResponse>().Subject;
         response.ClienteId.Should().Be(123);
         response.Status.Should().Be(PedidoStatus.Criado.ToString());
-        response.Total.Should().Be(21.00m); // 2 * 10.50
+        response.Total.Should().Be(21.00m);
         response.Itens.Should().HaveCount(1);
         response.Itens[0].ProdutoId.Should().Be("PROD001");
         response.Itens[0].NomeProduto.Should().Be("Produto Teste");
         response.Itens[0].Quantidade.Should().Be(2);
         response.Itens[0].PrecoUnitario.Should().Be(10.50m);
 
-        // Verify the pedido was saved in the database
         var savedPedido = await _fixture.DbContext.Pedidos.FirstOrDefaultAsync(p => p.ClienteId == 123);
         savedPedido.Should().NotBeNull();
         savedPedido!.Status.Should().Be(PedidoStatus.Criado);
@@ -96,7 +95,6 @@ public class OrdersControllerTests : IClassFixture<OrdersControllerFixture>
         var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         badRequestResult.Value.Should().Be("Informe ao menos 1 item.");
 
-        // Verify no pedido was saved
         var pedidoCount = await _fixture.DbContext.Pedidos.CountAsync();
         pedidoCount.Should().Be(0);
     }
@@ -201,8 +199,6 @@ public class OrdersControllerTests : IClassFixture<OrdersControllerFixture>
         // Assert
         result.Should().NotBeNull();
         result.Result.Should().BeOfType<NotFoundResult>();
-
-        // Note: Cannot verify GetStringAsync calls directly as it's an extension method
     }
 
     [Fact]
@@ -246,10 +242,9 @@ public class OrdersControllerTests : IClassFixture<OrdersControllerFixture>
         
         var response = createdResult.Value.Should().BeOfType<PedidoResponse>().Subject;
         response.ClienteId.Should().Be(789);
-        response.Total.Should().Be(96.00m); // (3 * 15.00) + (2 * 25.50) = 45 + 51 = 96
+        response.Total.Should().Be(96.00m);
         response.Itens.Should().HaveCount(2);
 
-        // Verify the pedido was saved with correct total
         var savedPedido = await _fixture.DbContext.Pedidos.FirstOrDefaultAsync(p => p.ClienteId == 789);
         savedPedido.Should().NotBeNull();
         savedPedido!.Total.Should().Be(96.00m);
