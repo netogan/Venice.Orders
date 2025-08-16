@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+**/*.swp
+**/*.temp
+**/*.log
+**/*.db
+**/TestResults/
+**/coverage/
+.env
+.git
+.gitignore
