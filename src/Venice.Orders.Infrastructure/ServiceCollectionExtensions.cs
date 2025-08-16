@@ -12,8 +12,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddSqlServerPersistence(this IServiceCollection services, IConfiguration config)
     {
         var cs = config.GetConnectionString("SqlServer")
-                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer")
-                 ?? "Server=localhost,1433;Database=VeniceOrdersDB;User Id=sa;Password=SQLServer123$;TrustServerCertificate=True;";
+                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer");
 
         services.AddDbContext<OrdersDbContext>(opt =>
         {

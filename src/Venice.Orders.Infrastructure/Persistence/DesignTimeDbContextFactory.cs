@@ -7,8 +7,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<OrdersDbCo
 {
     public OrdersDbContext CreateDbContext(string[] args)
     {
-        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer")
-                   ?? "Server=localhost,1433;Database=VeniceOrdersDB;User Id=sa;Password=SQLServer123$;TrustServerCertificate=True;";
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__SqlServer");
 
         var optionsBuilder = new DbContextOptionsBuilder<OrdersDbContext>();
         optionsBuilder.UseSqlServer(conn);
