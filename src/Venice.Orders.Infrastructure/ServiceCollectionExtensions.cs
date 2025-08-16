@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using Venice.Orders.Infrastructure.Mongo;
 using Venice.Orders.Infrastructure.Persistence;
 
@@ -62,20 +63,41 @@ public static class ServiceCollectionExtensions
             var maskedCs = connectionString?.Replace("SQLserver123$", "***");
             logger.LogInformation("Connection String: {ConnectionString}", maskedCs);
             
-            logger.LogInformation("Testando conectividade com o banco...");
-            var canConnect = await db.Database.CanConnectAsync();
-            if (!canConnect)
+            var maxRetries = 5;
+            var delay = TimeSpan.FromSeconds(2);
+            
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                logger.LogWarning("Não foi possível conectar ao banco de dados. Pulando migrações.");
-                return;
+                logger.LogInformation("Testando conectividade com o banco... (tentativa {Attempt}/{MaxRetries})", attempt, maxRetries);
+                
+                try
+                {
+                    var canConnect = await db.Database.CanConnectAsync();
+                    if (canConnect)
+                    {
+                        logger.LogInformation("Conexão com banco estabelecida. Aplicando migrações...");
+                        
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                        await db.Database.MigrateAsync(cts.Token);
+                        
+                        logger.LogInformation("Migrações EF aplicadas com sucesso!");
+                        return;
+                    }
+                }
+                catch (Exception ex) when (attempt < maxRetries)
+                {
+                    logger.LogWarning("Tentativa {Attempt} falhou: {Error}. Tentando novamente em {Delay}s...", 
+                        attempt, ex.Message, delay.TotalSeconds);
+                }
+                
+                if (attempt < maxRetries)
+                {
+                    await Task.Delay(delay);
+                    delay = TimeSpan.FromSeconds(delay.TotalSeconds * 1.5); // Exponential backoff
+                }
             }
             
-            logger.LogInformation("Conexão com banco estabelecida. Aplicando migrações...");
-            
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            await db.Database.MigrateAsync(cts.Token);
-            
-            logger.LogInformation("Migrações EF aplicadas com sucesso!");
+            logger.LogWarning("Não foi possível conectar ao banco de dados após {MaxRetries} tentativas. Pulando migrações.", maxRetries);
         }
         catch (Exception ex)
         {
@@ -95,6 +117,10 @@ public static class ServiceCollectionExtensions
             logger.LogInformation("Iniciando criação de índices MongoDB...");
             await MongoIndexInitializer.EnsureIndexesAsync(mongo, ct);
             logger.LogInformation("Índices MongoDB criados com sucesso!");
+        }
+        catch (MongoCommandException ex) when (ex.CodeName == "IndexKeySpecsConflict" || ex.Code == 85)
+        {
+            logger.LogInformation("Índice MongoDB já existe com nome diferente. Continuando...");
         }
         catch (Exception ex)
         {

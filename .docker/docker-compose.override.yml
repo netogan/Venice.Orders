@@ -11,6 +11,7 @@ services:
       - mongodb
       - redis
       - kafka
+      - sqlserver-init
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__SqlServer=Server=sqlserver,1433;Database=VeniceOrdersDB;User Id=sa;Password=SQLserver123$;TrustServerCertificate=True;
